@@ -6,6 +6,7 @@
 #define TIME_TO_SLEEP  5                     //Segundos a dormir el ESP
 
 #define MQTT_LENGTH 20                       //Largo del dato a enviar por mqtt
+#define POTENCIOMETRO 35                     //Pin del potenciometro
 char msg[MQTT_LENGTH];                       //Variable para el mensaje a enviar
 const char *ssid = "chuuyas";                //Nombre de la red
 const char *password = "53280077";           //Contraseña de la red
@@ -31,6 +32,8 @@ void setup() {
   }else{
     Serial.println("Noche.");
   }
+  //Lectura de agua
+  int mililitros = map(analogRead(POTENCIOMETRO), 990, 0, 0, 3750);
   //Obtención del nombre de la planta
   int it = 0;
   String planta = "";
@@ -49,7 +52,7 @@ void setup() {
     }  
   }
   //Publicar datos
-  snprintf(msg, MQTT_LENGTH, "%s,%d", planta, tiempo);
+  snprintf(msg, MQTT_LENGTH, "%s,%d,%d", planta, tiempo, mililitros);
   send_message(client, clientId, topic, msg);
   client->loop();
   //Dormir durante un tiempo 
