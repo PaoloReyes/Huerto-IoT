@@ -2,7 +2,7 @@
 #include <DHT.h>                             //Biblioteca para sensor de humedad
 #include <DHT_U.h>                           //Biblioteca para sensor de humedad
 #include <Temperatura.h>                     //Biblioteca propia para sensor de temperatura
-#include <WiFi.h>                            //Biblioteca para usar WiFi
+#include <WifiFunctions.h>                   //Biblioteca para conectar a wifi y enviar datos por MQTT
 #include <PubSubClient.h>                    //Biblioteca para usar MQTT
 
 #define DHTPIN 22                            //Pin del sensor de humedad
@@ -13,28 +13,25 @@
 #define TIME_TO_SLEEP  5                     //Segundos a dormir el ESP
 #define HUMEDAD_MINIMA 50                    //Humedad para regar la planta
 #define MQTT_LENGTH 20                       //Largo del dato a enviar por mqtt
-char msg[MQTT_LENGTH];
+char msg[MQTT_LENGTH];                       //Variable para el mensaje a enviar
 const char *ssid = "chuuyas";                //Nombre de la red
 const char *password = "53280077";           //Contraseña de la red
 const char *broker = "192.168.0.100";        //Ip del broker o de la raspberry
 const char *clientId = "ESP32Client_2";      //Cliente conectado al broker mqtt
-const char *topic = "/plantas/hierbabuena";  //Tópico a publicar los datos
+const char *topic = "/plantas/hierbabuena";       //Tópico a publicar los datos
 
-DHT_Unified dht(DHTPIN, DHTTYPE);            //Creación del objeto dht para manejo de sensor de humedad
-Termistor termistor(TERPIN, SERIESRES);      //Creación del objeto termistor para manejo de sensor de temperatura
-WiFiClient espClient;                        //Objeto para manejar WiFi
-PubSubClient client(espClient);              //Objeto para manejar MQTT usando la conexión WiFi
-uint32_t delayMS;                            //Variable global de tiempo de espera para la lectura del sensor de humedad para evitar saturarlo de peticiones
-
-void setup_wifi();                                      //Declaración de función para conectar WiFi
-void send_message(const char *clientId, char msg);      //Declaración de función para conectar a mqtt
+DHT_Unified dht(DHTPIN, DHTTYPE);                    //Creación del objeto dht para manejo de sensor de humedad
+Termistor termistor(TERPIN, SERIESRES);              //Creación del objeto termistor para manejo de sensor de temperatura
+WiFiClient espClient;                                //Objeto para manejar WiFi
+PubSubClient *client = new PubSubClient(espClient);  //Objeto para manejar MQTT usando la conexión WiFi
+uint32_t delayMS;                                    //Variable global de tiempo de espera para la lectura del sensor de humedad para evitar saturarlo de peticiones
 
 void setup() {
   Serial.begin(9600);
   //Incia la conexión a la red
-  setup_wifi();
+  setup_wifi(ssid, password);
   //Inicializar broker MQTT
-  client.setServer(broker, 1883);
+  client->setServer(broker, 1883);
   //Inicialización de sensor de humedad
   dht.begin();
   sensor_t sensor;
@@ -77,42 +74,11 @@ void setup() {
   }
   //Publicar datos
   snprintf(msg, MQTT_LENGTH, "%s,%d,%.2f", planta, humedad, temp);
-  send_message(clientId, msg);
-  client.loop();
+  send_message(client, clientId, topic, msg);
+  client->loop();
   //Dormir durante un tiempo 
   esp_deep_sleep_start();
 }
 
 void loop() {
-}
-
-void setup_wifi() {
-  delay(10);
-  Serial.println();
-  Serial.print("Conectando a ");
-  Serial.println(ssid);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  randomSeed(micros());
-  Serial.println("");
-  Serial.println("WiFi conectado");
-  Serial.println("Dirección IP: ");
-  Serial.println(WiFi.localIP());
-}
-
-void send_message(const char *clientId, char *msg) {
-  while (!client.connected()) {
-    Serial.print("Intentando establecer conexión MQTT...\n");
-    if (client.connect(clientId)) {
-      Serial.print(clientId);
-      Serial.println(": Conectado");
-      Serial.print("Enviando mensaje: ");
-      Serial.println(msg);
-      client.publish(topic, msg);
-    }
-  }
 }

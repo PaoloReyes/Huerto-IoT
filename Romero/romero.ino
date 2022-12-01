@@ -17,8 +17,8 @@ char msg[MQTT_LENGTH];                       //Variable para el mensaje a enviar
 const char *ssid = "chuuyas";                //Nombre de la red
 const char *password = "53280077";           //Contraseña de la red
 const char *broker = "192.168.0.100";        //Ip del broker o de la raspberry
-const char *clientId = "ESP32Client_3";      //Cliente conectado al broker mqtt
-const char *topic = "/plantas/albahaca";       //Tópico a publicar los datos
+const char *clientId = "ESP32Client_4";      //Cliente conectado al broker mqtt
+const char *topic = "/plantas/romero";       //Tópico a publicar los datos
 
 DHT_Unified dht(DHTPIN, DHTTYPE);                    //Creación del objeto dht para manejo de sensor de humedad
 Termistor termistor(TERPIN, SERIESRES);              //Creación del objeto termistor para manejo de sensor de temperatura
